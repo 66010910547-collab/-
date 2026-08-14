@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI เมนูชวนหิว - ถ่ายและอัปโหลดรูปวัตถุดิบ</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Prompt) -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Prompt', sans-serif;
+            background-color: #f8fafc;
+        }
+        .animate-spin-slow {
+            animation: spin 3s linear infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Header / Navbar -->
+    <header class="bg-amber-500 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white p-2 rounded-full text-amber-500 shadow-inner">
+                    <i class="fa-solid fa-utensils text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-xl tracking-wide leading-tight">AI เมนูชวนหิว</h1>
+                    <p class="text-xs text-amber-100 font-light">ถ่ายรูปหรือเพิ่มวัตถุดิบ คิดเมนูให้อัตโนมัติ</p>
+                </div>
+            </div>
+            <button id="guideBtn" class="bg-amber-600 hover:bg-amber-700 text-white text-xs md:text-sm px-3 py-1.5 rounded-lg transition duration-200 flex items-center gap-1">
+                <i class="fa-regular fa-circle-question"></i> วิธีใช้งาน
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-4xl w-full mx-auto p-4 md:p-6 space-y-6">
+
+        <!-- Guide Section -->
+        <div id="guideSection" class="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-amber-900 shadow-sm relative transition-all duration-300">
+            <button id="closeGuideBtn" class="absolute top-3 right-3 text-amber-500 hover:text-amber-800 p-1">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <h2 class="font-bold text-lg mb-3 flex items-center gap-2">
+                <i class="fa-solid fa-lightbulb text-amber-500"></i> วิธีใช้งานและเพิ่มรูปภาพวัตถุดิบ
+            </h2>
+            <ol class="list-decimal list-inside space-y-2 text-sm md:text-base leading-relaxed">
+                <li><strong>ถ่ายภาพจากกล้อง:</strong> กดปุ่ม <span class="bg-emerald-600 text-white px-2 py-0.5 rounded text-xs"><i class="fa-solid fa-camera"></i> ถ่ายภาพด้วยกล้อง</span> เพื่อถ่ายรูปวัตถุดิบสดๆ จากตู้เย็น</li>
+                <li><strong>เลือกรูปจากเครื่อง:</strong> กดปุ่ม <span class="bg-sky-600 text-white px-2 py-0.5 rounded text-xs"><i class="fa-solid fa-image"></i> เลือกจากคลังภาพ</span> เพื่ออัปโหลดไฟล์รูปที่มีอยู่แล้ว</li>
+                <li><strong>เพิ่มหลายภาพได้:</strong> คุณสามารถถ่ายภาพหรืออัปโหลดเพิ่มหลายๆ ใบได้ (เช่น ภาพผัก 1 รูป + ภาพเนื้อสัตว์ 1 รูป)</li>
+                <li><strong>วิเคราะห์และรับเมนู:</strong> กดปุ่ม <span class="bg-amber-500 text-white px-2 py-0.5 rounded text-xs">วิเคราะห์วัตถุดิบ</span> จากนั้นเลือกดูเมนูและขั้นตอนการทำได้ทันที</li>
+            </ol>
+        </div>
+
+        <!-- Input & Preview Section -->
+        <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 md:p-8 text-center">
+            <div class="mb-5">
+                <h2 class="text-lg md:text-xl font-bold text-slate-700">ถ่ายรูปหรือเลือกรูปภาพวัตถุดิบของคุณ</h2>
+                <p class="text-sm text-slate-500">สามารถเพิ่มหลายรูปภาพเพื่อรวมวัตถุดิบทั้งหมดที่มีได้</p>
+            </div>
+
+            <!-- Action Options: Camera vs Gallery -->
+            <div class="flex flex-wrap justify-center gap-3 mb-6">
+                <!-- Camera Button -->
+                <button onclick="document.getElementById('cameraInput').click()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-5 py-3 rounded-xl shadow-sm transition duration-200 flex items-center gap-2 text-sm">
+                    <i class="fa-solid fa-camera text-lg"></i> ถ่ายภาพด้วยกล้อง
+                </button>
+                <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden">
+
+                <!-- File Gallery Button -->
+                <button onclick="document.getElementById('galleryInput').click()" class="bg-sky-600 hover:bg-sky-700 text-white font-medium px-5 py-3 rounded-xl shadow-sm transition duration-200 flex items-center gap-2 text-sm">
+                    <i class="fa-solid fa-image text-lg"></i> เลือกรูปจากคลังภาพ
+                </button>
+                <input type="file" id="galleryInput" accept="image/*" multiple class="hidden">
+            </div>
+
+            <!-- Images Preview Gallery Grid -->
+            <div id="previewArea" class="border-2 border-dashed border-slate-200 rounded-xl p-4 min-h-[160px] flex flex-col justify-center items-center bg-slate-50">
+                <div id="emptyPlaceholder" class="text-slate-400 text-center py-4">
+                    <i class="fa-solid fa-images text-3xl mb-2 text-slate-300"></i>
+                    <p class="text-sm">ยังไม่มีรูปภาพวัตถุดิบที่เลือก</p>
+                    <p class="text-xs text-slate-400 mt-1">กดปุ่มด้านบนเพื่อถ่ายภาพหรือเพิ่มรูปภาพ</p>
+                </div>
+
+                <div id="imageGrid" class="hidden grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 w-full">
+                    <!-- Dynamic Preview Thumbnail Cards will be appended here -->
+                </div>
+            </div>
+
+            <!-- Analysis Trigger Button -->
+            <div class="mt-6 flex justify-center">
+                <button id="analyzeBtn" disabled class="bg-amber-500 hover:bg-amber-600 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-semibold px-8 py-3 rounded-xl shadow-md transition duration-200 flex items-center gap-2 text-base">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> วิเคราะห์วัตถุดิบและแนะนำเมนู
+                </button>
+            </div>
+        </section>
+
+        <!-- Loading Section -->
+        <div id="loadingSection" class="hidden bg-white rounded-2xl shadow-sm border border-slate-200 p-8 text-center">
+            <div class="inline-block p-4 rounded-full bg-amber-50 text-amber-500 mb-3 animate-spin-slow">
+                <i class="fa-solid fa-compact-disc text-4xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-slate-700">กำลังวิเคราะห์ภาพวัตถุดิบทั้งหมด...</h3>
+            <p class="text-sm text-slate-500 mt-1">AI กำลังอ่านส่วนผสมและคิดเมนูอร่อยๆ ให้คุณ โปรดรอสักครู่</p>
+        </div>
+
+        <!-- Result Section -->
+        <div id="resultSection" class="hidden space-y-6">
+            <!-- Detected Ingredients Badge List -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+                <h3 class="text-md font-bold text-slate-700 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-carrot text-orange-500"></i> วัตถุดิบที่พบในรูปภาพ:
+                </h3>
+                <div id="ingredientsList" class="flex flex-wrap gap-2">
+                    <!-- Badges will be inserted here -->
+                </div>
+            </div>
+
+            <!-- Recipe List Grid -->
+            <div>
+                <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-book-open text-amber-500"></i> เมนูอาหารแนะนำ
+                </h3>
+                <div id="recipesGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Recipe Cards will be inserted here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Recipe Detail Modal -->
+        <div id="recipeModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden flex justify-center items-center z-50 p-4">
+            <div class="bg-white rounded-2xl max-w-xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-100 flex flex-col">
+                <!-- Modal Header -->
+                <div class="p-5 border-b border-slate-100 flex justify-between items-start sticky top-0 bg-white z-10">
+                    <div>
+                        <span id="modalCategory" class="text-xs font-semibold uppercase tracking-wider text-amber-600 bg-amber-50 px-2.5 py-1 rounded-md">ประเภทอาหาร</span>
+                        <h2 id="modalTitle" class="text-xl font-bold text-slate-800 mt-1">ชื่อเมนู</h2>
+                    </div>
+                    <button id="closeModalBtn" class="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition">
+                        <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="p-5 space-y-5">
+                    <div class="flex justify-around bg-slate-50 p-3 rounded-xl text-center text-xs text-slate-600">
+                        <div>
+                            <span class="block text-slate-400">เวลาที่ใช้</span>
+                            <span id="modalPrepTime" class="font-semibold text-slate-700">15 นาที</span>
+                        </div>
+                        <div class="border-r border-slate-200"></div>
+                        <div>
+                            <span class="block text-slate-400">ระดับความยาก</span>
+                            <span id="modalDifficulty" class="font-semibold text-slate-700">ง่าย</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p id="modalDescription" class="text-slate-600 text-sm leading-relaxed"></p>
+                    </div>
+
+                    <div>
+                        <h4 class="font-bold text-slate-700 text-sm mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-basket-shopping text-amber-500"></i> วัตถุดิบและส่วนผสม
+                        </h4>
+                        <ul id="modalIngredients" class="list-disc list-inside text-sm text-slate-600 space-y-1 bg-amber-50/50 p-3 rounded-xl border border-amber-100/50">
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 class="font-bold text-slate-700 text-sm mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-list-check text-amber-500"></i> ขั้นตอนการทำ
+                        </h4>
+                        <ol id="modalSteps" class="space-y-3 text-sm text-slate-600">
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="p-4 border-t border-slate-100 bg-slate-50 text-right rounded-b-2xl">
+                    <button id="closeModalBottomBtn" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 rounded-xl text-sm font-medium transition">
+                        ปิดหน้าต่าง
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-400">
+        <p>พัฒนาด้วย Gemini API | ถ่ายรูปหรือเลือกรูปเพื่อคิดเมนูอาหาร</p>
+    </footer>
+
+    <!-- Logic Script -->
+    <script>
+        const apiKey = ""; // Canvas runtime provides API Key automatically
+
+        // Element References
+        const cameraInput = document.getElementById('cameraInput');
+        const galleryInput = document.getElementById('galleryInput');
+        const emptyPlaceholder = document.getElementById('emptyPlaceholder');
+        const imageGrid = document.getElementById('imageGrid');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+
+        const loadingSection = document.getElementById('loadingSection');
+        const resultSection = document.getElementById('resultSection');
+        const ingredientsList = document.getElementById('ingredientsList');
+        const recipesGrid = document.getElementById('recipesGrid');
+
+        const guideBtn = document.getElementById('guideBtn');
+        const guideSection = document.getElementById('guideSection');
+        const closeGuideBtn = document.getElementById('closeGuideBtn');
+
+        const recipeModal = document.getElementById('recipeModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const closeModalBottomBtn = document.getElementById('closeModalBottomBtn');
+
+        // Store selected images base64 data
+        let imageList = []; // Array of objects: { id, base64, dataUrl }
+        let currentRecipes = [];
+
+        // Guide Modal Toggle
+        guideBtn.addEventListener('click', () => guideSection.classList.toggle('hidden'));
+        closeGuideBtn.addEventListener('click', () => guideSection.classList.add('hidden'));
+
+        // Handle Camera Capture Input
+        cameraInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                processFiles([e.target.files[0]]);
+                e.target.value = ''; // reset input
+            }
+        });
+
+        // Handle Gallery Selection Input
+        galleryInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files.length > 0) {
+                processFiles(Array.from(e.target.files));
+                e.target.value = ''; // reset input
+            }
+        });
+
+        // Process File List to Base64
+        function processFiles(files) {
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const dataUrl = event.target.result;
+                    const base64 = dataUrl.split(',')[1];
+                    const id = Date.now() + Math.random().toString(36).substring(2, 9);
+                    
+                    imageList.push({ id, base64, dataUrl });
+                    renderImageGrid();
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Render Image Grid Thumbnails
+        function renderImageGrid() {
+            if (imageList.length === 0) {
+                emptyPlaceholder.classList.remove('hidden');
+                imageGrid.classList.add('hidden');
+                analyzeBtn.disabled = true;
+                return;
+            }
+
+            emptyPlaceholder.classList.add('hidden');
+            imageGrid.classList.remove('hidden');
+            analyzeBtn.disabled = false;
+
+            imageGrid.innerHTML = '';
+            imageList.forEach((imgObj) => {
+                const card = document.createElement('div');
+                card.className = "relative group aspect-square rounded-lg overflow-hidden bg-slate-200 border border-slate-300 shadow-sm";
+                card.innerHTML = `
+                    <img src="${imgObj.dataUrl}" class="w-full h-full object-cover" alt="วัตถุดิบ" />
+                    <button onclick="removeImage('${imgObj.id}')" class="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-md transition">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                `;
+                imageGrid.appendChild(card);
+            });
+        }
+
+        // Remove Single Image
+        window.removeImage = function(id) {
+            imageList = imageList.filter(img => img.id !== id);
+            renderImageGrid();
+        };
+
+        // Analyze Images via Gemini API
+        analyzeBtn.addEventListener('click', async () => {
+            if (imageList.length === 0) return;
+
+            loadingSection.classList.remove('hidden');
+            resultSection.classList.add('hidden');
+            analyzeBtn.disabled = true;
+
+            try {
+                const responseData = await fetchRecipeFromGemini(imageList);
+                displayResults(responseData);
+            } catch (error) {
+                alert("เกิดข้อผิดพลาดในการวิเคราะห์รูปภาพ: " + error.message);
+            } finally {
+                loadingSection.classList.add('hidden');
+                analyzeBtn.disabled = false;
+            }
+        });
+
+        // Gemini API Interaction Function
+        async function fetchRecipeFromGemini(images) {
+            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+            const promptText = `
+            ช่วยวิเคราะห์ภาพวัตถุดิบอาหารทั้งหมดที่แนบมานี้ จากนั้นระบุรายการวัตถุดิบที่ตรวจพบ และเสนอเมนูอาหารไทยหรืออาหารยอดนิยมที่ทำได้จากวัตถุดิบเหล่านี้มา 3-4 เมนู
+            ตอบกลับเป็นรูปแบบ JSON ตามโครงสร้างนี้เท่านั้น:
+            {
+                "detectedIngredients": ["วัตถุดิบ 1", "วัตถุดิบ 2"],
+                "recipes": [
+                    {
+                        "id": "1",
+                        "title": "ชื่อเมนูอาหาร",
+                        "category": "ประเภทอาหาร (เช่น ผัด, ต้ม, ทอด)",
+                        "prepTime": "ระยะเวลาทำ (เช่น 15 นาที)",
+                        "difficulty": "ระดับความยาก (ง่าย/ปานกลาง/ยาก)",
+                        "description": "คำอธิบายชวนรับประทานเกี่ยวกับเมนูนี้",
+                        "ingredients": ["ส่วนผสมทั้งหมดรวมถึงเครื่องปรุงที่ต้องใช้เพิ่มเติม"],
+                        "steps": ["ขั้นตอนที่ 1...", "ขั้นตอนที่ 2..."]
+                    }
+                ]
+            }
+            `;
+
+            // Construct payload parts array with prompt and images
+            const parts = [{ text: promptText }];
+            images.forEach(img => {
+                parts.push({
+                    inlineData: {
+                        mimeType: "image/jpeg",
+                        data: img.base64
+                    }
+                });
+            });
+
+            const payload = {
+                contents: [{ role: "user", parts: parts }],
+                generationConfig: { responseMimeType: "application/json" }
+            };
+
+            const delays = [1000, 2000, 4000, 8000, 16000];
+            for (let i = 0; i <= delays.length; i++) {
+                try {
+                    const res = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!res.ok) throw new Error(`HTTP Error Status: ${res.status}`);
+
+                    const data = await res.json();
+                    const textResult = data.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (textResult) {
+                        return JSON.parse(textResult);
+                    } else {
+                        throw new Error("ไม่สามารถอ่านผลลัพธ์จาก AI ได้");
+                    }
+                } catch (err) {
+                    if (i === delays.length) throw err;
+                    await new Promise(resolve => setTimeout(resolve, delays[i]));
+                }
+            }
+        }
+
+        // Render Results
+        function displayResults(data) {
+            ingredientsList.innerHTML = '';
+            recipesGrid.innerHTML = '';
+
+            // Render Ingredients
+            if (data.detectedIngredients && data.detectedIngredients.length > 0) {
+                data.detectedIngredients.forEach(item => {
+                    const badge = document.createElement('span');
+                    badge.className = "bg-orange-50 text-orange-600 border border-orange-200 text-xs px-3 py-1 rounded-full font-medium flex items-center gap-1";
+                    badge.innerHTML = `<i class="fa-solid fa-check text-xs"></i> ${item}`;
+                    ingredientsList.appendChild(badge);
+                });
+            } else {
+                ingredientsList.innerHTML = `<span class="text-xs text-slate-400">ไม่พบวัตถุดิบที่ระบุได้</span>`;
+            }
+
+            // Render Recipe Cards
+            currentRecipes = data.recipes || [];
+            if (currentRecipes.length > 0) {
+                currentRecipes.forEach((recipe, index) => {
+                    const card = document.createElement('div');
+                    card.className = "bg-white border border-slate-200 rounded-xl p-4 hover:shadow-md transition duration-200 flex flex-col justify-between";
+                    card.innerHTML = `
+                        <div>
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded">${recipe.category || 'เมนูทั่วไป'}</span>
+                                <span class="text-xs text-slate-400"><i class="fa-regular fa-clock"></i> ${recipe.prepTime || 'N/A'}</span>
+                            </div>
+                            <h4 class="font-bold text-slate-800 text-base mb-1">${recipe.title}</h4>
+                            <p class="text-slate-500 text-xs line-clamp-2 mb-4">${recipe.description}</p>
+                        </div>
+                        <button onclick="openRecipeModal(${index})" class="w-full bg-amber-50 hover:bg-amber-100 text-amber-700 font-medium text-xs py-2 rounded-lg transition duration-150 flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-utensils text-xs"></i> ดูสูตรและวิธีทำ
+                        </button>
+                    `;
+                    recipesGrid.appendChild(card);
+                });
+            } else {
+                recipesGrid.innerHTML = `<p class="text-sm text-slate-500 col-span-2 text-center py-4">ไม่พบเมนูแนะนำจากวัตถุดิบที่ระบุ</p>`;
+            }
+
+            resultSection.classList.remove('hidden');
+            resultSection.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Open Detail Modal
+        window.openRecipeModal = function(index) {
+            const recipe = currentRecipes[index];
+            if (!recipe) return;
+
+            document.getElementById('modalTitle').textContent = recipe.title;
+            document.getElementById('modalCategory').textContent = recipe.category || 'อาหารทั่วไป';
+            document.getElementById('modalPrepTime').textContent = recipe.prepTime || 'ไม่ระบุ';
+            document.getElementById('modalDifficulty').textContent = recipe.difficulty || 'ปานกลาง';
+            document.getElementById('modalDescription').textContent = recipe.description || '';
+
+            const modalIngredients = document.getElementById('modalIngredients');
+            modalIngredients.innerHTML = '';
+            (recipe.ingredients || []).forEach(ing => {
+                const li = document.createElement('li');
+                li.textContent = ing;
+                modalIngredients.appendChild(li);
+            });
+
+            const modalSteps = document.getElementById('modalSteps');
+            modalSteps.innerHTML = '';
+            (recipe.steps || []).forEach((step, idx) => {
+                const li = document.createElement('li');
+                li.className = "flex gap-3 items-start";
+                li.innerHTML = `
+                    <span class="bg-amber-500 text-white font-bold rounded-full w-5 h-5 flex items-center justify-center text-xs shrink-0 mt-0.5">${idx + 1}</span>
+                    <span>${step}</span>
+                `;
+                modalSteps.appendChild(li);
+            });
+
+            recipeModal.classList.remove('hidden');
+        };
+
+        // Modal Close Listeners
+        closeModalBtn.addEventListener('click', () => recipeModal.classList.add('hidden'));
+        closeModalBottomBtn.addEventListener('click', () => recipeModal.classList.add('hidden'));
+        recipeModal.addEventListener('click', (e) => {
+            if (e.target === recipeModal) recipeModal.classList.add('hidden');
+        });
+
+    </script>
+</body>
+</html>
+
